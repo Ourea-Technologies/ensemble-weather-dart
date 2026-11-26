@@ -1,0 +1,11 @@
+# Not shipped to pub.dev: the pinned spec (tests only), CI, tools and tests.
+.dart_tool/
+.github/
+.work/
+spec/
+test/
+tool/
+coverage/
+doc/api/
+pubspec.lock
+build/

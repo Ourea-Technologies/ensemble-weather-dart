@@ -1,0 +1,27 @@
+name: ensemble_weather
+description: >-
+  Official Dart and Flutter SDK for the Ourea probabilistic weather API:
+  ensemble forecasts, probabilities, storm totals, snow and current conditions.
+version: 0.1.0
+homepage: https://oureawx.com
+repository: https://github.com/Ourea-Technologies/ensemble-weather-dart
+issue_tracker: https://github.com/Ourea-Technologies/ensemble-weather-dart/issues
+documentation: https://docs.oureawx.com/dart
+topics:
+  - ourea
+  - weather
+  - forecast
+  - ensemble
+  - probabilistic
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  http: ^1.2.2
+
+dev_dependencies:
+  coverage: ^1.15.1
+  lints: ^5.0.0
+  test: ^1.25.0
+  yaml: ^3.1.2

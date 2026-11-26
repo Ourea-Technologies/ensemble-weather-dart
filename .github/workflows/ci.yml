@@ -1,0 +1,87 @@
+# SPDX-License-Identifier: BSD-2-Clause
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: Format, analyze, docs, package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: stable
+      - run: dart pub get --enforce-lockfile
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed .
+      - name: Analyze (fatal infos)
+        run: dart analyze --fatal-infos
+      - name: Runtime dependencies are justified
+        run: dart run tool/check_dependencies.dart
+      - name: API docs
+        run: dart doc --dry-run
+      - name: Package (pub.dev dry run)
+        run: dart pub publish --dry-run
+      - name: The library compiles for the web (no dart:io)
+        run: dart compile js -o build/web_smoke.js tool/web_smoke.dart
+
+  test:
+    name: Tests (Dart ${{ matrix.sdk }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        sdk: ["3.6", stable, beta]
+        include:
+          - os: macos-latest
+            sdk: stable
+          - os: windows-latest
+            sdk: stable
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: ${{ matrix.sdk }}
+      # The oldest supported SDK may resolve older dev tools than the lockfile.
+      - run: dart pub get
+      # Unit tests, all 58 shared vectors, the spec-drift test, and every
+      # example against the local stub server. No test calls the real API.
+      - name: Tests, vectors, drift and examples
+        run: dart test --coverage=coverage
+      - name: Coverage report
+        if: matrix.os == 'ubuntu-latest' && matrix.sdk == 'stable'
+        run: dart run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --report-on=lib
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: matrix.os == 'ubuntu-latest' && matrix.sdk == 'stable'
+        with:
+          name: coverage
+          path: coverage/lcov.info
+
+  spec:
+    name: spec/ matches spec/VERSION
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: stable
+      - run: dart run tool/sync_spec.dart --check

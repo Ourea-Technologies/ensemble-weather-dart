@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: BSD-2-Clause
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "41 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  osv:
+    name: Dependency audit (osv-scanner on pubspec.lock)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
+        with:
+          scan-args: --lockfile=pubspec.lock
+
+  static:
+    name: Static security lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: stable
+      - run: dart pub get --enforce-lockfile
+      - name: dart analyze (avoid_dynamic_calls, strict casts and inference)
+        run: dart analyze --fatal-infos lib
+      - name: No dart:mirrors, no runtime code loading, no disabled TLS in lib/
+        run: |
+          if grep -rnE "dart:mirrors|Isolate\.spawnUri|badCertificateCallback|dart:ffi" lib; then
+            echo "::error::a forbidden API is used in lib/"
+            exit 1
+          fi
+
+  zizmor:
+    name: Workflow audit (zizmor)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Only this repository's workflows: spec/ is a pinned copy of another
+      # repository, audited there.
+      - uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
+        with:
+          advanced-security: false
+          inputs: .github/
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: low
+          # pub.dev reports licences in lower case ("bsd-3-clause"), which the
+          # action cannot validate as SPDX, so it would fail every Dart
+          # package. Vulnerabilities are still checked here and by osv-scanner;
+          # the one runtime dependency (http, BSD-3-Clause) is reviewed by
+          # tool/check_dependencies.dart and CONTRIBUTING.md.
+          license-check: false

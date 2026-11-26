@@ -1,0 +1,24 @@
+name: Feature request
+description: Suggest an improvement to the Dart SDK, or an API capability.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The problem first, before any solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would help?
+      description: The API you would like to call. Probabilities and totals are computed by the server; a helper that needs client-side statistics is a request for a new API query.
+  - type: dropdown
+    id: server
+    attributes:
+      label: Does it need a change to the Ourea API?
+      options:
+        - "No, the SDK alone"
+        - "Yes, a new API capability"
+        - "Not sure"

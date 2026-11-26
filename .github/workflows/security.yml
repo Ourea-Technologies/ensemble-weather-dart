@@ -50,9 +50,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # Only this repository's workflows: spec/ is a pinned copy of another
+      # repository, audited there.
       - uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
         with:
           advanced-security: false
+          inputs: .github/
 
   dependency-review:
     name: Dependency review
@@ -65,5 +68,9 @@ jobs:
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: low
-          allow-licenses: >-
-            MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC, 0BSD, Unlicense
+          # pub.dev reports licences in lower case ("bsd-3-clause"), which the
+          # action cannot validate as SPDX, so it would fail every Dart
+          # package. Vulnerabilities are still checked here and by osv-scanner;
+          # the one runtime dependency (http, BSD-3-Clause) is reviewed by
+          # tool/check_dependencies.dart and CONTRIBUTING.md.
+          license-check: false

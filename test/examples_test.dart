@@ -66,10 +66,15 @@ void main() {
   });
 
   test('the README quickstart is example/quickstart.dart verbatim', () {
-    final readme = File('README.md').readAsStringSync();
+    final readme =
+        File('README.md').readAsStringSync().replaceAll('\r\n', '\n');
     final block = RegExp(r'```dart\n(.*?)```', dotAll: true).firstMatch(readme);
     expect(block, isNotNull, reason: 'README has no Dart code');
-    expect(block!.group(1), File('example/quickstart.dart').readAsStringSync());
+    expect(
+        block!.group(1),
+        File('example/quickstart.dart')
+            .readAsStringSync()
+            .replaceAll('\r\n', '\n'));
   });
 
   for (final example in _examples()) {

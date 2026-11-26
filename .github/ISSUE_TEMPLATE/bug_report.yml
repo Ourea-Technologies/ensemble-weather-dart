@@ -1,0 +1,39 @@
+name: Bug report
+description: Something in the Dart SDK does not work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting it. Security issue? Please do not file it here; see SECURITY.md.
+        Never paste your API key.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal code to reproduce
+      render: dart
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SDK version (packageVersion, or the version in pubspec.lock)
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Dart or Flutter version, platform and OS
+      description: For example "Dart 3.10.1 on macOS", or "Flutter 3.38 on Android 15 / web (Chrome)".
+    validations:
+      required: true
+  - type: input
+    id: request-id
+    attributes:
+      label: Request id (ApiException.requestId), if any

@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: BSD-2-Clause
+name: Live contract
+
+# Nightly: the quickstart and a short read-only contract run against the live
+# API with a CI key. Never on pull requests (forks never see the secret).
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    if: github.repository == 'Ourea-Technologies/ensemble-weather-dart'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+        with:
+          sdk: stable
+      - run: dart pub get --enforce-lockfile
+      - name: Quickstart (anonymous)
+        run: dart run example/quickstart.dart
+      - name: Contract run (read-only key)
+        run: dart run tool/live_contract.dart
+        env:
+          OUREA_API_KEY: ${{ secrets.OUREA_CI_API_KEY }}
